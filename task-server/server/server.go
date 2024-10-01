@@ -1,7 +1,9 @@
 package server
 
 import (
+	"bufio"
 	"fmt"
+	"go-task-server/task-server/tasks"
 	"log"
 	"net"
 	"sync"
@@ -39,6 +41,18 @@ func HandleConnection(conn net.Conn) {
 	defer conn.Close()
 	log.Printf("Started executing tasks from %v", conn.RemoteAddr())
 
-	
+	// process the requests
+	scanner := bufio.NewReader(conn)
+
+	for {
+		taskMessage, err := scanner.ReadString('\n')
+		if err != nil {
+			log.Printf("Failed to read task request from connection %v : %s", conn.RemoteAddr(), err)
+			return
+		}
+
+		tasks.HandleTask(taskMessage)
+
+	}
 
 }

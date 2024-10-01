@@ -25,8 +25,7 @@ Timeout is in milliseconds. A timeout of 0 or a missing timeout field means ther
 is no timeout.
 
 Task requests will be terminated by a new-line. After submitting a TaskRequest, 
-the scheduler will wait to receive a TaskResult before issuing another new-line 
-terminated TaskRequest.
+the scheduler will wait to receive a TaskResult before issuing another new-line terminated TaskRequest.
 
 Your agent should respond with a TaskResult:
 

@@ -1,10 +1,8 @@
 package tasks
 
-import "time"
-
 type TaskRequest struct {
-	Command []string      `json:"command"`
-	Timeout time.Duration `json:"timeout"`
+	Command []string `json:"command"`
+	Timeout *int     `json:"timeout,omitempty"`
 }
 
 type TaskResult struct {
