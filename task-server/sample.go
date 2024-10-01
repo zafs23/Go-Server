@@ -102,23 +102,3 @@ func executeTask(taskReq TaskRequest) TaskResult {
 
 	return taskResult
 }
-
-// func main() {
-// 	listener, err := net.Listen("tcp", "127.0.0.1:3000")
-// 	if err != nil {
-// 		log.Fatal("Failed to set up TCP server:", err)
-// 	}
-// 	defer listener.Close()
-
-// 	log.Println("Listening on 127.0.0.1:3000")
-
-// 	for {
-// 		conn, err := listener.Accept()
-// 		if err != nil {
-// 			log.Println("Failed to accept connection:", err)
-// 			continue
-// 		}
-
-// 		go handleConnection(conn)
-// 	}
-// }
