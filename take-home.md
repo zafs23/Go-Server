@@ -51,8 +51,7 @@ Upon receiving a TaskRequest:
       assign the string `timeout exceeded` to the `error` field.
   - Capture everything written to STDOUT and put it in the `output` field.
 
-The solution needs to be able to process requests in parallel, meaning that it can accept and start processing 
-multiple requests in parallel, without yet having returned the previous results.
+The solution needs to be able to process requests in parallel, meaning that it can accept and start processing multiple requests in parallel, without yet having returned the previous results.
 
 The solution must contain unit tests validating the results.
 

@@ -51,7 +51,12 @@ func HandleConnection(conn net.Conn) {
 			return
 		}
 
-		tasks.HandleTask(taskMessage)
+		/*
+			no go routine is used here as "After submitting a TaskRequest,
+			the scheduler will wait to receive a TaskResult before issuing another new-line terminated TaskRequest."
+		*/
+
+		tasks.HandleTask(taskMessage, conn)
 
 	}
 
