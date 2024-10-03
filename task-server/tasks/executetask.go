@@ -61,17 +61,22 @@ func processTask(task TaskRequest) TaskResult {
 	executedAt := startTime.Unix()
 
 	// creating a default timeout when timeout is not given
-	if task.Timeout == nil {
-		task.Timeout = create(6000)
+	const defaultTimeout = 10000
+	if task.Timeout == 0 {
+		task.Timeout = defaultTimeout
 	}
-	timeOutDuration := time.Duration(*task.Timeout) * time.Millisecond
+	timeOutDuration := time.Duration(task.Timeout) * time.Millisecond
 
 	taskResult := TaskResult{
 		Command:    task.Command,
 		ExecutedAt: executedAt,
 	}
 
-	cmd := exec.Command(task.Command[0], task.Command[1:]...)
+	// change the taskRequest absolute path to base command from command[0]
+	//taskRequest.Command = append([]string{filepath.Base(task.Command[0])}, task.Command[1:]...)
+
+	baseCmd := filepath.Base(task.Command[0])
+	cmd := exec.Command(baseCmd, task.Command[1:]...)
 	var output, outputError strings.Builder
 	cmd.Stdout = &output
 	cmd.Stderr = &outputError
@@ -88,7 +93,7 @@ func processTask(task TaskRequest) TaskResult {
 	*/
 	case <-time.After(timeOutDuration):
 		cmd.Process.Kill()
-		taskResult.DurationMs = float64(*task.Timeout)
+		taskResult.DurationMs = float64(task.Timeout)
 		taskResult.ExitCode = -1
 		taskResult.Error = "timeout exceeded"
 	/*
@@ -132,13 +137,9 @@ func validateTaskRequest(taskRequest TaskRequest) error {
 
 	// check if the time out is negative value
 
-	if taskRequest.Timeout != nil && *taskRequest.Timeout < 0 {
+	if taskRequest.Timeout < 0 {
 		return errors.New("the timeout value should be an positive value")
 	}
 
 	return nil
-}
-
-func create(x int) *int {
-	return &x
 }
