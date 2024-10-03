@@ -39,7 +39,7 @@ func HandleTask(taskMessage string, conn net.Conn) {
 
 	go func(task TaskRequest) {
 		defer wg.Done()
-		taskResult := ProcessTask(task)
+		taskResult := processTask(task)
 
 		processBytes, processError := json.Marshal(taskResult)
 
@@ -55,7 +55,7 @@ func HandleTask(taskMessage string, conn net.Conn) {
 
 }
 
-func ProcessTask(task TaskRequest) TaskResult {
+func processTask(task TaskRequest) TaskResult {
 	startTime := time.Now()
 
 	executedAt := startTime.Unix()
@@ -72,9 +72,9 @@ func ProcessTask(task TaskRequest) TaskResult {
 	}
 
 	cmd := exec.Command(task.Command[0], task.Command[1:]...)
-	var output strings.Builder
+	var output, outputError strings.Builder
 	cmd.Stdout = &output
-	cmd.Stderr = &output
+	cmd.Stderr = &outputError
 
 	// run the command in a go routine and send the error message through a channel
 	done := make(chan error, 1)
@@ -88,6 +88,7 @@ func ProcessTask(task TaskRequest) TaskResult {
 	*/
 	case <-time.After(timeOutDuration):
 		cmd.Process.Kill()
+		taskResult.DurationMs = float64(*task.Timeout)
 		taskResult.ExitCode = -1
 		taskResult.Error = "timeout exceeded"
 	/*
@@ -103,6 +104,7 @@ func ProcessTask(task TaskRequest) TaskResult {
 		} else { // there was no error on running the command, capture everything on the output
 			taskResult.ExitCode = 0
 			taskResult.Output = output.String()
+			taskResult.Error = outputError.String() // when the command ran, but has both error and stdout
 		}
 
 	}

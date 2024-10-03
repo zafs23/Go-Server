@@ -32,12 +32,12 @@ func StartListener(wg *sync.WaitGroup, port int) {
 		}
 
 		// handle the connection in a concurrently
-		go HandleConnection(conn)
+		go handleConnection(conn)
 
 	}
 }
 
-func HandleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn) {
 	defer conn.Close()
 	log.Printf("Started executing tasks from %v", conn.RemoteAddr())
 
