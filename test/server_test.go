@@ -19,13 +19,15 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"go-task-server/task-server/server"
-	"go-task-server/task-server/tasks"
 	"net"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/zafs23/Go-Server/task-server/tasks"
+
+	"github.com/zafs23/Go-Server/task-server/server"
 )
 
 // // test StartListener
