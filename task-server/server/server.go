@@ -52,21 +52,15 @@ func handleConnection(conn net.Conn) {
 
 		taskMessage := scanner.Text()
 
-		// if err != nil {
-		// 	if err == io.EOF {
-		// 		log.Fatalf("Connection closed by client %v", conn.RemoteAddr())
-		// 		//return // or close the connection gracefully
-		// 	}
-		// 	log.Fatalf("Failed to read task request from connection %v : %s", conn.RemoteAddr(), err)
-		// 	//return
+		if taskMessage == "" {
+			log.Printf("Skipping empty lines")
+			continue // Skip empty lines, if any
+		}
 
 		/*
 			no go routine is used here as "After submitting a TaskRequest,
 			the scheduler will wait to receive a TaskResult before issuing another new-line terminated TaskRequest."
 		*/
-		if taskMessage == "" {
-			continue // Skip empty lines, if any
-		}
 
 		tasks.HandleTask(taskMessage, conn)
 
