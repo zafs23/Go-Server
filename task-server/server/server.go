@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"go-task-server/task-server/tasks"
+	"io"
 	"log"
 	"net"
 	"sync"
@@ -39,25 +40,43 @@ func StartListener(wg *sync.WaitGroup, port int) {
 
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
+
 	log.Printf("Started executing tasks from %v", conn.RemoteAddr())
 
 	// process the requests
-	scanner := bufio.NewReader(conn)
+	//scanner := bufio.NewReader(conn)
+	scanner := bufio.NewScanner(conn)
 
-	for {
-		taskMessage, err := scanner.ReadString('\n')
-		if err != nil {
-			log.Printf("Failed to read task request from connection %v : %s", conn.RemoteAddr(), err)
-			return
-		}
+	for scanner.Scan() {
+		//taskMessage, err := scanner.ReadString('\n')
+
+		taskMessage := scanner.Text()
+
+		// if err != nil {
+		// 	if err == io.EOF {
+		// 		log.Fatalf("Connection closed by client %v", conn.RemoteAddr())
+		// 		//return // or close the connection gracefully
+		// 	}
+		// 	log.Fatalf("Failed to read task request from connection %v : %s", conn.RemoteAddr(), err)
+		// 	//return
 
 		/*
 			no go routine is used here as "After submitting a TaskRequest,
 			the scheduler will wait to receive a TaskResult before issuing another new-line terminated TaskRequest."
 		*/
+		if taskMessage == "" {
+			continue // Skip empty lines, if any
+		}
 
 		tasks.HandleTask(taskMessage, conn)
 
 	}
+
+	// Check for errors in reading
+	if err := scanner.Err(); err != nil && err != io.EOF {
+		log.Printf("Failed to read task request from connection %v : %s", conn.RemoteAddr(), err)
+	}
+
+	log.Printf("Finished processing tasks from %v", conn.RemoteAddr())
 
 }

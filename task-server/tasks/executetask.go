@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -34,28 +33,36 @@ func HandleTask(taskMessage string, conn net.Conn) {
 		return
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(1)
+	responseChan := make(chan []byte)
 
 	go func(task TaskRequest) {
-		defer wg.Done()
-		taskResult := processTask(task)
+		//defer wg.Done()
+		taskResult := ProcessTask(task)
 
 		processBytes, processError := json.Marshal(taskResult)
 
 		if processError != nil {
 			log.Fatalf("Error marshalling result: %v", processError)
-			fmt.Fprintf(conn, `{"error": "Failed to process task"}\n`)
-		} else {
-			fmt.Fprintf(conn, "%s\n", string(processBytes))
+			responseChan <- []byte(`{"error": "Failed to process task"}\n`)
+			return
 		}
+		//fmt.Fprintf(conn, "%s\n", string(processBytes))
+		responseChan <- append(processBytes, '\n')
+		close(responseChan)
+
 	}(taskRequest)
 
-	wg.Wait()
+	// Write the response back to the connection
+	select {
+	case response := <-responseChan:
+		fmt.Fprintf(conn, "%s", response)
+	case <-time.After(5 * time.Second): // Timeout to avoid hanging
+		log.Println("Timeout waiting for task response")
+	}
 
 }
 
-func processTask(task TaskRequest) TaskResult {
+func ProcessTask(task TaskRequest) TaskResult {
 	startTime := time.Now()
 
 	executedAt := startTime.Unix()
@@ -88,17 +95,14 @@ func processTask(task TaskRequest) TaskResult {
 	}()
 
 	select {
-	/*
-		if timeout exceeded, kill the process (asumed) and put the status code -1, and error to timeout exceeded
-	*/
+	//if timeout exceeded, kill the process (asumed) and put the status code -1, and error to timeout exceeded
 	case <-time.After(timeOutDuration):
 		cmd.Process.Kill()
 		taskResult.DurationMs = float64(task.Timeout)
 		taskResult.ExitCode = -1
 		taskResult.Error = "timeout exceeded"
-	/*
-		if the process was failed to run, check the error message
-	*/
+
+	//if the process was failed to run, check the error message
 	case cmdErr := <-done:
 		duration := time.Since(startTime).Microseconds()
 		taskResult.DurationMs = float64(duration)
@@ -106,10 +110,12 @@ func processTask(task TaskRequest) TaskResult {
 		if cmdErr != nil {
 			taskResult.ExitCode = -1
 			taskResult.Error = cmdErr.Error()
+			log.Printf("Command failed with error: %v", cmdErr)
 		} else { // there was no error on running the command, capture everything on the output
 			taskResult.ExitCode = 0
 			taskResult.Output = output.String()
-			taskResult.Error = outputError.String() // when the command ran, but has both error and stdout
+			taskResult.Error = outputError.String()      // when the command ran, but has both error and stdout
+			log.Printf("Command executed successfully.") // Log output and error
 		}
 
 	}
