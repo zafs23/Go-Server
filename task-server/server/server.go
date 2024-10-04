@@ -2,6 +2,7 @@ package server
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -11,15 +12,21 @@ import (
 	"github.com/zafs23/Go-Server/task-server/tasks"
 )
 
-func StartListener(wg *sync.WaitGroup, port int) {
+func StartListener(ctx context.Context, wg *sync.WaitGroup, port int) {
 	defer wg.Done() // signal the task is done to go routine
 
 	ep := fmt.Sprintf("127.0.0.1:%d", port)
 
-	listener, err := net.Listen("tcp", ep)
-	if err != nil {
-		log.Fatalf("Failed to start listening on port %d: %v", port, err)
+	listener, listenerErr := net.Listen("tcp", ep)
+	if listenerErr != nil {
+		log.Fatalf("Failed to start listening on port %d: %v", port, listenerErr)
 	}
+
+	go func() {
+		<-ctx.Done()
+		log.Printf("Shutting down listener on port %d", port)
+		listener.Close() // force to break the accept() call
+	}()
 
 	defer listener.Close()
 
@@ -27,11 +34,22 @@ func StartListener(wg *sync.WaitGroup, port int) {
 
 	// accept connections in a loop
 	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			log.Printf("Cannot accept connection on port %d: %v", port, err)
-			continue
+		conn, connErr := listener.Accept()
+		if connErr != nil {
+			select {
+			case <-ctx.Done():
+				log.Printf("Listener closed on port %d", port)
+				return
+			default:
+				log.Printf("Cannot accept connection on port %d: %v", port, connErr)
+				continue
+			}
 		}
+		// conn, err := listener.Accept()
+		// if err != nil {
+		// 	log.Printf("Cannot accept connection on port %d: %v", port, err)
+		// 	continue
+		// }
 
 		wg.Add(1)
 		// handle the connection in a concurrently
