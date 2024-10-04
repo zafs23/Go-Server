@@ -12,8 +12,8 @@ import (
 	"time"
 )
 
+// handle and write
 func HandleTask(taskMessage string, conn net.Conn) {
-
 	// parse the Task Message to create a TaskRequest
 	var taskRequest TaskRequest
 
@@ -26,39 +26,25 @@ func HandleTask(taskMessage string, conn net.Conn) {
 	}
 
 	// validate the input
-
 	if validationError := validateTaskRequest(taskRequest); validationError != nil {
 		log.Printf("Validation failed: %v", validationError)
 		fmt.Fprintf(conn, `{"error": "%s"}\n`, validationError.Error())
 		return
 	}
 
-	responseChan := make(chan []byte)
+	// process the task synchronously as we need to implement each command one by one
+	// if did this asynchronously we could have used a channel to signal when task was executed
+	taskResult := ProcessTask(taskRequest)
+	processBytes, processError := json.Marshal(taskResult)
 
-	go func(task TaskRequest) {
-		//defer wg.Done()
-		taskResult := ProcessTask(task)
-
-		processBytes, processError := json.Marshal(taskResult)
-
-		if processError != nil {
-			log.Fatalf("Error marshalling result: %v", processError)
-			responseChan <- []byte(`{"error": "Failed to process task"}\n`)
-			return
-		}
-		//fmt.Fprintf(conn, "%s\n", string(processBytes))
-		responseChan <- append(processBytes, '\n')
-		close(responseChan)
-
-	}(taskRequest)
-
-	// Write the response back to the connection
-	select {
-	case response := <-responseChan:
-		fmt.Fprintf(conn, "%s", response)
-	case <-time.After(5 * time.Second): // Timeout to avoid hanging
-		log.Println("Timeout waiting for task response")
+	if processError != nil {
+		log.Printf("Error marshaling result: %v", processError)
+		fmt.Fprintf(conn, `{"error": "Failed to process task"}\n`)
+		return
 	}
+
+	// write the response back to the connection
+	fmt.Fprintf(conn, "%s\n", string(processBytes))
 
 }
 
@@ -84,11 +70,14 @@ func ProcessTask(task TaskRequest) TaskResult {
 
 	baseCmd := filepath.Base(task.Command[0])
 	cmd := exec.Command(baseCmd, task.Command[1:]...)
+
 	var output, outputError strings.Builder
 	cmd.Stdout = &output
 	cmd.Stderr = &outputError
 
 	// run the command in a go routine and send the error message through a channel
+	// this will run the commands asynchronously and will help with timeouts
+	// otherwise the process task will be blocked by cmd.Run() if timeout happens
 	done := make(chan error, 1)
 	go func() {
 		done <- cmd.Run()

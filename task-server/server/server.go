@@ -51,6 +51,7 @@ func handleConnection(conn net.Conn, wg *sync.WaitGroup) {
 
 	// process the requests
 	reader := bufio.NewReaderSize(conn, 8192) // 8KB buffer size
+	//reader := bufio.NewReader(conn)
 	// we can custom this buffer size
 
 	for {
