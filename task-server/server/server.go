@@ -32,13 +32,16 @@ func StartListener(wg *sync.WaitGroup, port int) {
 			continue
 		}
 
+		wg.Add(1)
 		// handle the connection in a concurrently
-		go handleConnection(conn)
+		go handleConnection(conn, wg)
 
 	}
 }
 
-func handleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn, wg *sync.WaitGroup) {
+
+	defer wg.Done()
 	defer conn.Close()
 
 	log.Printf("Started executing tasks from %v", conn.RemoteAddr())
@@ -61,6 +64,8 @@ func handleConnection(conn net.Conn) {
 			no go routine is used here as "After submitting a TaskRequest,
 			the scheduler will wait to receive a TaskResult before issuing another new-line terminated TaskRequest."
 		*/
+		// Process the task
+		//log.Printf("Processing task: %s", taskMessage)
 
 		tasks.HandleTask(taskMessage, conn)
 
