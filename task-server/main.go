@@ -1,9 +1,10 @@
 package main
 
 import (
-	"go-task-server/task-server/server"
 	"log"
 	"sync"
+
+	"github.com/zafs23/Go-Server/task-server/server"
 )
 
 // declare the ports you want to listen
