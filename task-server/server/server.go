@@ -36,10 +36,12 @@ func StartListener(wg *sync.WaitGroup, port int) {
 		wg.Add(1)
 		// handle the connection in a concurrently
 		go handleConnection(conn, wg)
+		// should not call a wg.wait() here, otherwise it will block each time it accepts new connections
 
 	}
 }
 
+// read
 func handleConnection(conn net.Conn, wg *sync.WaitGroup) {
 
 	defer wg.Done()
@@ -48,14 +50,30 @@ func handleConnection(conn net.Conn, wg *sync.WaitGroup) {
 	log.Printf("Started executing tasks from %v", conn.RemoteAddr())
 
 	// process the requests
-	//scanner := bufio.NewReader(conn)
-	scanner := bufio.NewScanner(conn)
+	reader := bufio.NewReaderSize(conn, 8192) // 8KB buffer size
+	// we can custom this buffer size
 
-	for scanner.Scan() {
+	for {
 		//taskMessage, err := scanner.ReadString('\n')
+		line, isPrefix, err := reader.ReadLine()
 
-		taskMessage := scanner.Text()
+		if err != nil {
+			if err == io.EOF {
+				log.Printf("Connection closed by client %v", conn.RemoteAddr())
+				break
+			}
+			log.Printf("Failed to read task request from connection %v: %s", conn.RemoteAddr(), err)
+			break
+		}
 
+		// handle incomplete lines that exceeds the buffer size
+		if isPrefix {
+			log.Printf("Received an incomplete line (too long) from %v", conn.RemoteAddr())
+			continue
+			// this handles each request within the buffer size
+		}
+
+		taskMessage := string(line)
 		if taskMessage == "" {
 			log.Printf("Skipping empty lines")
 			continue // Skip empty lines, if any
@@ -66,17 +84,10 @@ func handleConnection(conn net.Conn, wg *sync.WaitGroup) {
 			the scheduler will wait to receive a TaskResult before issuing another new-line terminated TaskRequest."
 		*/
 		// Process the task
-		//log.Printf("Processing task: %s", taskMessage)
 
 		tasks.HandleTask(taskMessage, conn)
 
 	}
-
-	// Check for errors in reading
-	if err := scanner.Err(); err != nil && err != io.EOF {
-		log.Printf("Failed to read task request from connection %v : %s", conn.RemoteAddr(), err)
-	}
-
 	log.Printf("Finished processing tasks from %v", conn.RemoteAddr())
 
 }
