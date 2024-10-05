@@ -1,4 +1,4 @@
-## Simple Go Server
+## Simple Go Server ![workflow](https://github.com/zafs23/Go-Server/actions/workflows/go.yml/badge.svg)
 This project builds a simple server built in Go (Golang) which listens to a TCP server on localhost:$Port  and processes client requests.
 
 ### Getting Started
