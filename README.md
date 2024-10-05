@@ -13,7 +13,7 @@ Before running the server, have Go and Git installed on your machine.  The proje
 To set up the project, clone the repositoy to your local machine:
 ```
 git clone https://github.com/zafs23/Go-Server.git
-cd Go-Server
+cd Go-Server/task-server
 ```
 Then, run the server using: 
 ```
@@ -47,5 +47,5 @@ The server processes the task requests in parallel. It can accept and start proc
 #### Testing
 To execute the automated tests, run the following command from the project directory:
 ```
-go test ./test/...
+go test -v ./test/...
 ```
