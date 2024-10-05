@@ -53,14 +53,14 @@ func StartListener(ctx context.Context, wg *sync.WaitGroup, port int) {
 
 		wg.Add(1)
 		// handle the connection in a concurrently
-		go handleConnection(conn, wg)
+		go HandleConnection(conn, wg)
 		// should not call a wg.wait() here, otherwise it will block each time it accepts new connections
 
 	}
 }
 
 // read
-func handleConnection(conn net.Conn, wg *sync.WaitGroup) {
+func HandleConnection(conn net.Conn, wg *sync.WaitGroup) {
 
 	defer wg.Done()
 	defer conn.Close()
