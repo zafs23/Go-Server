@@ -1,4 +1,4 @@
-## Simple Go Server
+## Simple Go Server ![workflow](https://github.com/zafs23/Go-Server/actions/workflows/go.yml/badge.svg)
 This project builds a simple server built in Go (Golang) which listens to a TCP server on localhost:$Port  and processes client requests.
 
 ### Getting Started
@@ -13,7 +13,7 @@ Before running the server, have Go and Git installed on your machine.  The proje
 To set up the project, clone the repositoy to your local machine:
 ```
 git clone https://github.com/zafs23/Go-Server.git
-cd Go-Server
+cd Go-Server/task-server
 ```
 Then, run the server using: 
 ```
@@ -47,5 +47,5 @@ The server processes the task requests in parallel. It can accept and start proc
 #### Testing
 To execute the automated tests, run the following command from the project directory:
 ```
-go test ./test/...
+go test -v ./test/...
 ```
