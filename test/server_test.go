@@ -12,6 +12,7 @@ import (
 	"github.com/zafs23/Go-Server/task-server/tasks"
 )
 
+// test the server listener
 func TestStartListener(t *testing.T) {
 	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(context.Background())
@@ -55,6 +56,7 @@ func TestStartListener(t *testing.T) {
 	wg.Wait()
 }
 
+// test if the server can handle multiple connections asynchronously
 func TestStartListenerHandlesMultipleConnections(t *testing.T) {
 	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(context.Background())
@@ -129,6 +131,7 @@ func TestStartListenerHandlesMultipleConnections(t *testing.T) {
 	wg.Wait()
 }
 
+// test if the server can one connection
 func TestHandleConnection(t *testing.T) {
 	serverS, client := net.Pipe() // Creates an in-memory connection
 
@@ -159,6 +162,7 @@ func TestHandleConnection(t *testing.T) {
 	wg.Wait()
 }
 
+// test if the tasker can handle a valid json format task request
 func TestHandleValidTask(t *testing.T) {
 	server, client := net.Pipe()
 
@@ -182,6 +186,7 @@ func TestHandleValidTask(t *testing.T) {
 	server.Close()
 }
 
+// test if the tasker can handle a timeout task request
 func TestHandleNoTimeOutTask(t *testing.T) {
 	server, client := net.Pipe()
 
@@ -205,6 +210,7 @@ func TestHandleNoTimeOutTask(t *testing.T) {
 	server.Close()
 }
 
+// test if the tasker can validate valid json task requests
 func TestHandleTaskValidations(t *testing.T) {
 	// Define a set of test cases for various validation errors
 	testCases := []struct {
@@ -259,6 +265,7 @@ func TestHandleTaskValidations(t *testing.T) {
 	}
 }
 
+// test if the tasker can process an invalid task format
 func TestHandleInvalidTask(t *testing.T) {
 	server, client := net.Pipe()
 
@@ -284,7 +291,7 @@ func TestHandleInvalidTask(t *testing.T) {
 
 }
 
-// TestProcessValidTask tests if a task correctly processes a valid task
+// test if a task processor correctly processes a valid task
 func TestProcessValidTask(t *testing.T) {
 	taskRequest := tasks.TaskRequest{
 		Command: []string{"/bin/echo", "Handling Task"},
@@ -302,7 +309,7 @@ func TestProcessValidTask(t *testing.T) {
 	}
 }
 
-// TestTaskTimeout tests if a task correctly handles a timeout.
+// test if the task processor handles a timeout
 func TestProcessValidTaskTimeout(t *testing.T) {
 	taskRequest := tasks.TaskRequest{
 		Command: []string{"sleep", "2"},
