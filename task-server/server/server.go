@@ -37,7 +37,7 @@ func StartListener(ctx context.Context, wg *sync.WaitGroup, port int) {
 		conn, connErr := listener.Accept()
 		if connErr != nil {
 			select {
-			case <-ctx.Done():
+			case <-ctx.Done(): // receive cancel() request
 				log.Printf("Listener closed on port %d", port)
 				return
 			default:
@@ -52,7 +52,7 @@ func StartListener(ctx context.Context, wg *sync.WaitGroup, port int) {
 		// }
 
 		wg.Add(1)
-		// handle the connection in a concurrently
+		// handle the connection concurrently
 		go HandleConnection(conn, wg)
 		// should not call a wg.wait() here, otherwise it will block each time it accepts new connections
 
@@ -98,13 +98,14 @@ func HandleConnection(conn net.Conn, wg *sync.WaitGroup) {
 			continue // Skip empty lines, if any
 		}
 
-		/*
-			no go routine is used here as "After submitting a TaskRequest,
-			the scheduler will wait to receive a TaskResult before issuing another new-line terminated TaskRequest."
-		*/
-		// Process the task
+		wg.Add(1)
 
-		tasks.HandleTask(taskMessage, conn)
+		// Process the task asynchronously
+
+		go func(taskMsg string, connection net.Conn) {
+			defer wg.Done()
+			tasks.HandleTask(taskMessage, conn)
+		}(taskMessage, conn)
 
 	}
 	log.Printf("Finished processing tasks from %v", conn.RemoteAddr())
