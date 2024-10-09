@@ -154,6 +154,7 @@ func TestHandleConnection(t *testing.T) {
 		t.Fatalf("Failed to read from connection: %v", err)
 	}
 	response := string(buffer[:n])
+	// Check if there is a response
 	if response == "" {
 		t.Fatalf("Expected a response, got empty string")
 	}
@@ -178,6 +179,7 @@ func TestHandleValidTask(t *testing.T) {
 		t.Fatalf("Failed to read from connection: %v", err)
 	}
 	response := string(buffer[:n])
+	// Check if the response contains the expected error message
 	if !strings.Contains(response, "Handling Task") {
 		t.Fatalf("Expected response to contain 'Handling Task', got: %s", response)
 	}
@@ -186,7 +188,7 @@ func TestHandleValidTask(t *testing.T) {
 	server.Close()
 }
 
-// test if the tasker can handle a timeout task request
+// test if the tasker can handle a no-timeout task request
 func TestHandleNoTimeOutTask(t *testing.T) {
 	server, client := net.Pipe()
 
@@ -202,6 +204,7 @@ func TestHandleNoTimeOutTask(t *testing.T) {
 		t.Fatalf("Failed to read from connection: %v", err)
 	}
 	response := string(buffer[:n])
+	// Check if the response contains the expected error message
 	if !strings.Contains(response, "Handling Task without timeout") {
 		t.Fatalf("Expected response to contain 'Handling Task without timeout', got: %s", response)
 	}
@@ -241,6 +244,7 @@ func TestHandleTaskValidations(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		// running subtests on the test cases
 		t.Run(tc.name, func(t *testing.T) {
 			server, client := net.Pipe() // Create an in-memory network connection
 
@@ -265,7 +269,7 @@ func TestHandleTaskValidations(t *testing.T) {
 	}
 }
 
-// test if the tasker can process an invalid task format
+// test if the tasker can process an invalid json task format
 func TestHandleInvalidTask(t *testing.T) {
 	server, client := net.Pipe()
 
@@ -281,6 +285,8 @@ func TestHandleInvalidTask(t *testing.T) {
 		t.Fatalf("Failed to read from connection: %v", err)
 	}
 	response := string(buffer[:n])
+
+	// Check if the response contains the expected error message
 	expectedResponse := `{"error": "Invalid JSON format"}`
 	if !strings.Contains(response, expectedResponse) {
 		t.Fatalf("Expected response to contain %s, got: %s", expectedResponse, response)
@@ -293,6 +299,7 @@ func TestHandleInvalidTask(t *testing.T) {
 
 // test if a task processor correctly processes a valid task
 func TestProcessValidTask(t *testing.T) {
+	// process task input is a marshaled task req
 	taskRequest := tasks.TaskRequest{
 		Command: []string{"/bin/echo", "Handling Task"},
 		Timeout: 1000,
